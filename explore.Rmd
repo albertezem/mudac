@@ -1,0 +1,106 @@
+---
+title: "explore"
+output: html_document
+date: "2025-03-10"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(readxl)
+```
+
+```{r data, warning=FALSE}
+train = read_excel("data/Training.xlsx")
+test = read_excel("data/Test_Truncated.xlsx")
+novice = read_excel("data/Novice.xlsx")
+```
+
+```{r glimpse}
+glimpse(novice)
+```
+
+```{r summary}
+summary(novice)
+```
+
+```{r 1a}
+ggplot(novice) + geom_histogram(aes(x = `Match Length`))
+```
+
+```{r closure reasons}
+unique(novice$`Closure Reason`)
+```
+
+```{r reason count}
+novice %>%
+  group_by(`Closure Reason`) %>%
+  summarise(n = n_distinct(`Match ID 18Char`)) %>%
+  arrange(n)
+```
+
+```{r did child or volunteer cause closure}
+novice = novice %>%
+  mutate(closure_cause = case_when(
+    str_detect(`Closure Reason`, "^Child") ~ "Child",
+    str_detect(`Closure Reason`, "^Volunteer") ~ "Volunteer",
+    str_detect(`Closure Reason`, "^Agency") ~ "Agency",
+    .default = `Closure Reason`
+  ))
+
+
+```
+
+```{r volunteer reasons}
+novice %>%
+  filter(closure_cause == "Volunteer") %>%
+  group_by(`Closure Reason`) %>%
+  summarise(n = n_distinct(`Match ID 18Char`)) %>%
+  arrange(n)
+```
+```{r possible volunteer reasons}
+novice = novice %>% mutate(volunteer_reason = fct_collapse(`Closure Reason`, 
+                                     "Lack of time" = "Volunteer: Time constraint",
+                                     "Unavoidable circumstance" = c("Volunteer: Moved", "Volunteer: Moved out of service area", "Volunteer: Changed workplace/school partnership", "Volunteer: Health", "Volunteer: Deceased", "Volunteer: Moved within service area"),
+                                     "Communication breakdown" = c("Volunteer: Lost contact with child/agency", "Volunteer: Lost contact with child/family", "Volunteer: Lost contact with agency"), 
+                                     "Bad match" = c("Volunteer: Feels incompatible with child/family", "Volunteer: Unrealistic expectations", "Volunteer: Infraction of match rules/agency policies"),
+                                     other_level = NULL))
+
+```
+
+```{r 1b}
+ggplot(novice) + geom_bar(aes(x = closure_cause))
+```
+
+
+```{r 1b.2}
+novice %>%
+  filter(closure_cause == "Volunteer") %>%
+  select(`Match ID 18Char`, `Match Length`, volunteer_reason) %>%
+  distinct() %>%
+  ggplot() + geom_bar(aes(x = volunteer_reason))
+```
+
+```{r Match length vs program type}
+novice %>%
+  select(`Match ID 18Char`, `Match Length`, `Closure Reason`, `Program Type`) %>%
+  distinct() %>% 
+  ggplot() + geom_histogram(aes(x = `Match Length`)) + facet_wrap(vars(`Program Type`))
+```
+
+```{r closure vs program type}
+
+table(novice$closure_cause, novice$`Program Type`)
+```
+```{r}
+novice %>%
+  ggplot() + geom_histogram(aes(x = `Match Length`))
+```
+
+```{r}
+library(naniar)
+vis_miss(novice, warn_large_data=TRUE)
+```
+```{r}
+vis_miss(train, warn_large_data=FALSE)
+```
+

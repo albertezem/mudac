@@ -1,0 +1,105 @@
+---
+title: "change_over_time"
+output: html_document
+---
+
+```{r "adding time periods"}
+novice = novice %>%
+  mutate(match_period = case_when(
+    `Match Activation Date` < "2020-01-01" ~ as.factor("pre-covid"),
+    (`Match Activation Date` > "2020-01-01" & `Match Activation Date` < "2022-01-01") ~ as.factor("covid"),
+    `Match Activation Date` > "2022-01-01" ~ as.factor("post-covid")))
+```
+
+```{r adding some sort of "proportion of possible time spent together"}
+novice = novice %>%
+  mutate(time_spent = difftime(`Match Closure Meeting Date`, `Match Activation Date`, units = "days"),
+         max_possible_time = difftime(as.POSIXct("2025-02-06"), `Match Activation Date`, units = "days"),
+         match_proportion = case_when(Stage == "Active" ~ 1, 
+                                      .default = round(as.integer(time_spent) / as.integer(max_possible_time), 2)))
+```
+
+```{r negative time spent?}
+novice %>% filter(match_proportion < 0) %>%
+  select(`Match Activation Date`, `Match Closure Meeting Date`, `Closure Reason`)
+```
+
+
+```{r}
+novice %>%
+  filter(`Match Activation Date` < "2020-01-01") %>%
+  ggplot() + geom_histogram(aes(x = `Match Length`))
+  
+```
+
+```{r}
+novice %>%
+  filter((`Match Activation Date` > "2020-01-01") & (`Match Activation Date` < "2022-01-01")) %>%
+  ggplot() + geom_histogram(aes(x = `Match Length`))
+```
+
+```{r}
+novice %>%
+  filter(`Match Activation Date` > "2022-01-01") %>%
+  ggplot() + geom_histogram(aes(x = `Match Length`))
+```
+
+```{r}
+ggplot(novice) + geom_histogram(aes(x = `Match Length`)) + facet_wrap(vars(match_period))
+```
+
+```{r}
+ggplot(novice) + geom_histogram(aes(x = match_proportion)) + facet_wrap(vars(match_period))
+```
+
+```{r}
+ggplot(novice) + geom_bar(aes(x = closure_cause)) + facet_wrap(vars(match_period))
+```
+
+```{r}
+novice %>%
+  ggplot() + geom_point(aes(x = `Match Activation Date`, y = `Match Length`))
+```
+```{r}
+library(survival)
+```
+
+```{r}
+novice = novice %>%
+  mutate(status = ifelse(Stage == "Active", 0, 1))
+```
+
+```{r}
+surv_fit = survfit(Surv(`Match Length`, status) ~ 1, data = novice)
+```
+
+```{r}
+plot(surv_fit, xlab = "Months", ylab = "P(T > t)")
+```
+
+```{r}
+ggplot() + geom_step(aes(x = surv_fit$time, y = surv_fit$surv))
+```
+
+```{r}
+library(gganimate)
+library(gifski)
+library(lubridate)
+```
+
+```{r}
+novice = novice %>%
+  mutate(closure_year = year(`Match Closure Meeting Date`))
+
+#p = ggplot(novice) + geom_bar(aes(x = closure_cause)) + transition_time(`Match Activation Date`)
+```
+
+
+```{r}
+p = ggplot(novice) + geom_bar(aes(x = closure_cause)) + labs(title = '{frame_time}')+ transition_time(closure_year)
+
+animate(p, renderer = gifski_renderer())
+```
+
+
+

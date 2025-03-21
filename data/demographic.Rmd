@@ -1,0 +1,39 @@
+---
+title: "demographic"
+output: html_document
+---
+
+```{r}
+novice = novice %>%
+  mutate(little_age = round(as.integer(difftime(as.POSIXct("2025-02-06"), `Little Birthdate`, units = "days"))/365,0),
+         age_diff = `Big Age` - little_age)
+```
+
+```{r}
+ggplot(novice) + geom_point(aes(x = age_diff, y= `Match Length`))
+```
+
+
+```{r}
+demographic_similarity <- function(row)
+  big_demo
+```
+
+```{r}
+ggplot(novice) + geom_histogram(aes(x = little_age), bins = 17)
+```
+
+```{r}
+novice %>%
+  filter(`Closure Reason` == "Successful match closure") %>%
+  summarise(m = mean(little_age), sd = sd(little_age))
+```
+
+```{r}
+cox_model <- coxph(Surv(`Match Length`, status) ~ little_age, data = novice)
+```
+
+```{r}
+summary(cox_model)
+```
+

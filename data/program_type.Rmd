@@ -1,0 +1,29 @@
+---
+title: "program_type"
+output: html_document
+---
+
+```{r 2, match length}
+novice %>%
+  select(`Match ID 18Char`, `Match Length`, `Closure Reason`, `Program Type`) %>%
+  distinct() %>% 
+  ggplot() + geom_histogram(aes(x = `Match Length`)) + facet_wrap(vars(`Program Type`))
+```
+
+```{r closure vs program type}
+
+reason = as.data.frame(table(novice$closure_cause, novice$`Program Type`))
+```
+
+```{r}
+reason
+```
+
+
+```{r}
+ggplot(reason) + geom_col(aes(x = Var1, y = Freq)) + facet_wrap(vars(Var2))
+```
+```{r}
+unique(novice$`Closure Reason`)
+```
+
