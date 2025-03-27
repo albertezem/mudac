@@ -2,6 +2,10 @@
 title: "demographic"
 output: html_document
 ---
+```{r}
+library(tidyverse)
+```
+
 
 ```{r}
 novice = novice %>%
@@ -35,5 +39,22 @@ cox_model <- coxph(Surv(`Match Length`, status) ~ little_age, data = novice)
 
 ```{r}
 summary(cox_model)
+```
+```{r}
+library(survival)
+cox.zph(cox_model)
+```
+
+```{r}
+novice = novice %>%
+  mutate(gender_match = ifelse(`Big Gender` == `Little Gender`, TRUE, FALSE))
+```
+
+```{r}
+gender_model <- coxph(Surv(`Match Length`, status) ~ gender_match + little_age + `Big Age`, data = novice)
+summary(gender_model)
+```
+```{r}
+cox.zph(gender_model)
 ```
 

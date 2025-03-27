@@ -104,3 +104,15 @@ vis_miss(novice, warn_large_data=TRUE)
 vis_miss(train, warn_large_data=FALSE)
 ```
 
+```{r}
+novice %>%
+  group_by(`Big Occupation`) %>%
+  summarise(n = n()) %>%
+  arrange(n)
+```
+
+```{r}
+summary(novice$`Match Length`)
+  
+```
+
