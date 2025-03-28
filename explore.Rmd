@@ -116,3 +116,7 @@ summary(novice$`Match Length`)
   
 ```
 
+```{r}
+ggplot(novice) + geom_histogram(aes(x = age_diff))
+```
+

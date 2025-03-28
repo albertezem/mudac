@@ -3,3 +3,50 @@ title: "engineering"
 output: html_document
 ---
 
+```{r}
+novice = novice %>%
+  mutate(little_age = round(as.integer(difftime(as.POSIXct("2025-02-06"), `Little Birthdate`, units = "days"))/365,0),
+         age_diff = `Big Age` - little_age,
+         age_diff_bin = ifelse(age_diff < 10, FALSE, TRUE),
+         is_student = ifelse(`Big Occupation` == "Student: College", TRUE, FALSE))
+```
+
+
+```{r}
+novice = novice %>%
+  mutate("big_is_hispanic" = ifelse(str_detect(`Big Race/Ethnicity`, "Hispanic"), TRUE, FALSE),
+         "big_is_black" = ifelse(str_detect(`Big Race/Ethnicity`, "Black or African American"), TRUE, FALSE),
+         "big_is_white" = ifelse(str_detect(`Big Race/Ethnicity`, "White or Caucasian") | str_detect(`Big Race/Ethnicity`, "Middle Eastern or North African"), TRUE, FALSE),
+         "big_is_asian" = ifelse(str_detect(`Big Race/Ethnicity`, "Asian"), TRUE, FALSE),
+         "big_is_pacific" = ifelse(str_detect(`Big Race/Ethnicity`, "Pacific Islander"), TRUE, FALSE),
+         "big_is_am_indian" = ifelse(str_detect(`Big Race/Ethnicity`, "American Indian"), TRUE, FALSE),
+         "little_is_hispanic" = ifelse(str_detect(`Little Participant: Race/Ethnicity`, "Hispanic"), TRUE, FALSE),
+         "little_is_black" = ifelse(str_detect(`Little Participant: Race/Ethnicity`, "Black or African American"), TRUE, FALSE),
+         "little_is_white" = ifelse(str_detect(`Little Participant: Race/Ethnicity`, "White or Caucasian") | str_detect(`Big Race/Ethnicity`, "Middle Eastern or North African"), TRUE, FALSE),
+         "little_is_asian" = ifelse(str_detect(`Little Participant: Race/Ethnicity`, "Asian"), TRUE, FALSE),
+         "little_is_pacific" = ifelse(str_detect(`Little Participant: Race/Ethnicity`, "Pacific Islander"), TRUE, FALSE),
+         "little_is_am_indian" = ifelse(str_detect(`Little Participant: Race/Ethnicity`, "American Indian"), TRUE, FALSE)) 
+```
+
+```{r}
+novice = novice %>%
+  mutate(race_match = case_when(
+    (big_is_hispanic & little_is_hispanic) | (big_is_black & little_is_black) | (big_is_white & little_is_white) | (big_is_pacific & little_is_pacific) | (big_is_am_indian & little_is_am_indian) | (big_is_asian & little_is_asian) ~ TRUE,
+    .default = FALSE
+  )) 
+```
+
+```{r}
+novice = novice %>%
+  mutate(closure_reason_grp = as_factor(case_when(
+  `Closure Reason` %in% c("Child: Graduated", "Successful match closure") ~ "Succesful",
+  `Closure Reason` %in% c("Child/Family: Feels incompatible with volunteer", "Volunteer: Feels incompatible with child/family", "Child: Lost interest") ~ "Incompatible",
+  `Closure Reason` %in% c("Volunteer: Infraction of match rules/agency policies", "Volunteer: Unrealistic expectations", "Agency: Concern with Volunteer re: child safety") ~ "Unviable",
+  `Closure Reason` %in% c("Volunteer: Time constraint", "Volunteer: Moved", "Volunteer: Lost contact with child/agency", "Volunteer: Lost contact with agency", "Volunteer: Lost contact with child/family", "Volunteer: Changed workplace/school partnership") & `Match Length` < 18 ~ "Unviable",
+  `Match Length` >= 18 ~ "Succesful",
+  little_age >= 18 ~ "Succesful",
+  .default = "Unclear" 
+  ))) 
+  
+```
+
